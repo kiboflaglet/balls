@@ -11,6 +11,7 @@ export default function App() {
   const [loading, setLoading] = useState(!!paramId);
   const [creating, setCreating] = useState(false);
   const [balls, setBalls] = useState<BallData[]>([]);
+  const [keepColor, setKeepColor] = useState(false);
 
   const draggingId = useRef<number | null>(null);
   const offset = useRef({ x: 0, y: 0 });
@@ -69,7 +70,9 @@ export default function App() {
       },
     ]);
 
-    setSelectedColor(getRandomColor());
+    if (!keepColor) {
+      setSelectedColor(getRandomColor());
+    }
   };
   const saveBoard = async () => {
     if (!boardId) return;
@@ -166,6 +169,18 @@ export default function App() {
           onChange={(e) => setSelectedColor(e.target.value)}
           className="w-12 h-10 cursor-pointer"
         />
+
+        <input
+          type="checkbox"
+          checked={keepColor}
+          onChange={(e) => setKeepColor(e.target.checked)}
+          className="w-6 h-6 cursor-pointer"
+          id="keep-color"
+        />
+
+        <label htmlFor="keep-color" className="text-white">
+          Keep color
+        </label>
 
         <button
           onClick={handleAddBall}
