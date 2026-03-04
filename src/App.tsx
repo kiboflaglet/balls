@@ -33,8 +33,40 @@ export default function App() {
     );
   };
 
+
   const handleMouseUp = () => {
     draggingId.current = null;
+  };
+
+  const getRandomPosition = () => {
+    const padding = 40;
+    return {
+      x: Math.random() * (window.innerWidth - padding),
+      y: Math.random() * (window.innerHeight - padding),
+    };
+  };
+
+  const getRandomColor = () =>
+    `#${Math.floor(Math.random() * 16777215)
+      .toString(16)
+      .padStart(6, "0")}`;
+
+  const [selectedColor, setSelectedColor] = useState(getRandomColor());
+
+  const handleAddBall = () => {
+    const position = getRandomPosition();
+
+    setBalls((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        x: position.x,
+        y: position.y,
+        color: selectedColor,
+      },
+    ]);
+
+    setSelectedColor(getRandomColor());
   };
 
   return (
@@ -43,6 +75,21 @@ export default function App() {
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
     >
+      <div className="flex items-center gap-4 m-4">
+        <input
+          type="color"
+          value={selectedColor}
+          onChange={(e) => setSelectedColor(e.target.value)}
+          className="w-12 h-10 cursor-pointer"
+        />
+
+        <button
+          onClick={handleAddBall}
+          className="bg-white px-5 py-2 rounded-xl"
+        >
+          Add Ball
+        </button>
+      </div>
       {balls.map((ball) => (
         <Ball key={ball.id} ball={ball} onMouseDown={handleMouseDown} />
       ))}
