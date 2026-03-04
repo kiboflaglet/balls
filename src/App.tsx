@@ -150,7 +150,10 @@ export default function App() {
     >
       <div className="absolute top-1 right-4">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => {
+            setBalls([]);
+            navigate("/");
+          }}
           className="bg-white text-black px-4 py-2 rounded-xl"
         >
           Create New
