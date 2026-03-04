@@ -1,5 +1,3 @@
-```
-yarn install
-yarn dev
-```
+*[balls.vercel.app](balls.vercel.app)*
+
 start grabbing & dragging balls lol

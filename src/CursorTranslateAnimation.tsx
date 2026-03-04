@@ -1,4 +1,4 @@
-import { useState, type BaseSyntheticEvent } from "react";
+import { useState } from "react";
 
 type MousePos = {
   X: number;
