@@ -1,12 +1,16 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { supabase } from "./supabase";
+import { useNavigate, useParams } from "react-router";
 
 type BallData = { id: number; x: number; y: number; color: string };
 
 export default function App() {
-  const [balls, setBalls] = useState<BallData[]>([
-    { id: 1, x: 50, y: 50, color: "yellow" },
-    { id: 2, x: 200, y: 150, color: "red" },
-  ]);
+  const { id: paramId } = useParams();
+  const navigate = useNavigate();
+  const [boardId, setBoardId] = useState<string | null>(paramId ?? null);
+  const [loading, setLoading] = useState(!!paramId);
+  const [creating, setCreating] = useState(false);
+  const [balls, setBalls] = useState<BallData[]>([]);
 
   const draggingId = useRef<number | null>(null);
   const offset = useRef({ x: 0, y: 0 });
@@ -32,7 +36,6 @@ export default function App() {
       )
     );
   };
-
 
   const handleMouseUp = () => {
     draggingId.current = null;
@@ -68,6 +71,76 @@ export default function App() {
 
     setSelectedColor(getRandomColor());
   };
+  const saveBoard = async () => {
+    if (!boardId) return;
+
+    const { error } = await supabase
+      .from("boards")
+      .update({ balls })
+      .eq("id", boardId);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    alert("Board updated");
+  };
+
+  const handleCopyLink = async () => {
+    if (boardId) {
+      const link = `${window.location.origin}/${boardId}`;
+      await navigator.clipboard.writeText(link);
+      alert("Link copied");
+      return;
+    }
+
+    setCreating(true);
+
+    const { data, error } = await supabase
+      .from("boards")
+      .insert([{ balls }])
+      .select()
+      .single();
+
+    if (error || !data) {
+      console.error(error);
+      setCreating(false);
+      return;
+    }
+
+    const newId = data.id;
+
+    setBoardId(newId);
+    window.history.replaceState({}, "", `/${newId}`);
+
+    const link = `${window.location.origin}/${newId}`;
+    await navigator.clipboard.writeText(link);
+
+    alert("Link copied");
+    setCreating(false);
+  };
+  useEffect(() => {
+    if (!boardId) return;
+
+    const fetchBoard = async () => {
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from("boards")
+        .select("balls")
+        .eq("id", boardId)
+        .single();
+
+      if (!error && data?.balls) {
+        setBalls(data.balls);
+      }
+
+      setLoading(false);
+    };
+
+    fetchBoard();
+  }, [boardId]);
 
   return (
     <div
@@ -75,6 +148,14 @@ export default function App() {
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
     >
+      <div className="absolute top-1 right-4">
+        <button
+          onClick={() => navigate("/")}
+          className="bg-white text-black px-4 py-2 rounded-xl"
+        >
+          Create New
+        </button>
+      </div>
       <div className="flex items-center gap-4 m-4">
         <input
           type="color"
@@ -89,7 +170,29 @@ export default function App() {
         >
           Add Ball
         </button>
+        {boardId && (
+          <button
+            onClick={saveBoard}
+            disabled={loading}
+            className="bg-blue-500 text-white px-5 py-2 rounded-xl disabled:opacity-50"
+          >
+            Update
+          </button>
+        )}
+
+        <button
+          onClick={handleCopyLink}
+          disabled={loading || creating}
+          className="bg-green-500 text-white px-5 py-2 rounded-xl disabled:opacity-50"
+        >
+          {creating ? "Creating..." : "Copy Link"}
+        </button>
       </div>
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center text-2xl font-semibold">
+          Loading...
+        </div>
+      )}
       {balls.map((ball) => (
         <Ball key={ball.id} ball={ball} onMouseDown={handleMouseDown} />
       ))}
